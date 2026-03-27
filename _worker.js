@@ -11,7 +11,7 @@ const 桥梁缓冲水位 = 2 * 1024 * 1024;
 const 发送缓冲水位 = 2 * 1024 * 1024;
 const 直连超时毫秒 = 5000;
 const 合包最大字节 = 512 * 1024;
-const 合包最大等待 = 20;
+const 合包最大等待 = 5;
 
 export default {
   async fetch(来自外面的请求) {
