@@ -1,212 +1,294 @@
+import { connect } from 'cloudflare:sockets';
 
-import { connect } from "cloudflare:sockets";
+const 小魔法颜色表 = Array.from({ length: 256 }, (_, i) => (i + 256).toString(16).slice(1));
+const 小可爱文字解码器 = new TextDecoder();
 
-const 哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒 = Array.from({ length: 256 }, (_, i) => (i + 256).toString(16).slice(1));
-let 人家的小粉红魔法心心钥匙钥匙超级秘密哦 = "58889888-8888-8888-8888-588898885888";
-let 小星星默认连接窝窝酱酱 = "ip.8298888.xyz";
-const 超级大缓冲魔法池池大小大小 = 256 * 1024; // 千兆专用256KB，下载飞起直播稳稳~
+const 我的小甜甜身份证 = '58889888-8888-8888-8888-588898885888';
+const 默认备用小可爱地址 = 'ip.8298888.xyz';
+
+// 🚀 保留你的高吞吐参数
+const 桥梁缓冲水位 = 2 * 1024 * 1024;
+const 发送缓冲水位 = 2 * 1024 * 1024;
+const 直连超时毫秒 = 5000;
+const 合包最大字节 = 512 * 1024;
+const 合包最大等待 = 20;
 
 export default {
-  async fetch(粉粉小请求糖果包包) {
-    const 小偷偷请求头头头头 = 粉粉小请求糖果包包.headers.get("Upgrade");
-    const url = new URL(粉粉小请求糖果包包.url);
-    if (小偷偷请求头头头头 === "websocket") {
-      if (url.searchParams.has("host")) {
-        小星星默认连接窝窝酱酱 = url.searchParams.get("host");
+  async fetch(来自外面的请求) {
+    const 握手头 = 来自外面的请求.headers.get('Upgrade');
+    const 网址 = new URL(来自外面的请求.url);
+    
+    if (握手头 && 握手头.toLowerCase() === 'websocket') {
+      let 候选地址 = 默认备用小可爱地址;
+      
+      // ✅ 提取逻辑：采用刚才纯净版中 100% 成功的提取方式
+      if (网址.searchParams.has('ip')) {
+        候选地址 = 网址.searchParams.get('ip');
+      } else {
+        const 提取路径IP = 网址.pathname.match(/^\/ip=([^&]+)/);
+        if (提取路径IP) {
+          候选地址 = decodeURIComponent(提取路径IP[1]);
+        }
       }
-      if (url.searchParams.has("buf")) {
-        const bufSize = parseInt(url.searchParams.get("buf"));
-        if (bufSize > 0 && bufSize <= 512 * 1024) 超级大缓冲魔法池池大小大小 = bufSize;
-      }
-      return await 升级升级小粉红连接通道通道();
+      
+      return await 升级成小可爱通道(候选地址);
     }
     return new Response(null);
   },
 };
 
-async function 升级升级小粉红连接通道通道() {
-  const 超级粉嫩嫩WS双双小宝贝宝贝 = new WebSocketPair();
-  const [客户端小星星星, WS超级接口萌酱酱] = Object.values(超级粉嫩嫩WS双双小宝贝宝贝);
-  WS超级接口萌酱酱.accept();
-  WS超级接口萌酱酱.send(new Uint8Array([0, 0]));
-  启动启动超级无敌传输魔法传送门门(WS超级接口萌酱酱);
-  return new Response(null, { status: 101, webSocket: 客户端小星星星 });
+async function 升级成小可爱通道(当前备用地址) {
+  const 泡泡对 = new WebSocketPair();
+  const [小甜甜端, 服务端] = Object.values(泡泡对);
+  服务端.accept();
+  服务端.send(new Uint8Array([0, 0]));
+  开启数据小火车(服务端, 当前备用地址).catch(() => {});
+  return new Response(null, { status: 101, webSocket: 小甜甜端 });
 }
 
-async function 启动启动超级无敌传输魔法传送门门(WS超级接口萌酱酱) {
-  let TCP小窝窝连接酱酱;
-  let 是不是人家超级首首小包包呀呀 = true;
-  let 小排排魔法等待糖果队列队队 = Promise.resolve();
-  let 写入写入小流流可爱宝贝贝;
-  let 已已关闭关闭小铃铃铛铛 = false;
-  let 超级大缓冲魔法池池 = new Uint8Array(0);
+async function 开启数据小火车(服务端, 当前备用地址) {
+  let 小火车TCP通道;
+  let 是第一个糖果包 = true;
+  let 已经关门了 = false;
+  let 排队小助手 = Promise.resolve();
 
-  WS超级接口萌酱酱.addEventListener("close", () => { 已已关闭关闭小铃铃铛铛 = true; });
-  WS超级接口萌酱酱.addEventListener("error", () => { 已已关闭关闭小铃铃铛铛 = true; });
+  const ts桥梁 = new TransformStream(
+    {},
+    new ByteLengthQueuingStrategy({ highWaterMark: 桥梁缓冲水位 }),
+    new ByteLengthQueuingStrategy({ highWaterMark: 桥梁缓冲水位 }),
+  );
+  const 桥梁写入端 = ts桥梁.writable.getWriter();
 
-  WS超级接口萌酱酱.addEventListener("message", (event) => {
-    if (已已关闭关闭小铃铃铛铛) return;
-    小排排魔法等待糖果队列队队 = 小排排魔法等待糖果队列队队.then(async () => {
-      try {
-        const 小数据块块 = new Uint8Array(event.data);
-        if (是不是人家超级首首小包包呀呀) {
-          是不是人家超级首首小包包呀呀 = false;
-          await 超级超级可爱解析解析协议协议小头头头(event.data, WS超级接口萌酱酱);
-        } else {
-          超级大缓冲魔法池池 = concatBuffers(超级大缓冲魔法池池, 小数据块块);
-          if (超级大缓冲魔法池池.length >= 超级大缓冲魔法池池大小大小 && 写入写入小流流可爱宝贝贝 && !写入写入小流流可爱宝贝贝.closed) {
-            await 写入写入小流流可爱宝贝贝.write(超级大缓冲魔法池池);
-            超级大缓冲魔法池池 = new Uint8Array(0);
-          }
-        }
-      } catch (e) {
-        console.error("小呜呜错误错误:", e);
-        已已关闭关闭小铃铃铛铛 = true;
+  function 关门谢客(代码 = 1011, 原因 = '再见啦', WS已先关闭 = false) {
+    if (已经关门了) return;
+    已经关门了 = true;
+    if (!WS已先关闭) {
+      try { 服务端.close(代码, 原因); } catch {}
+    }
+    桥梁写入端.close().catch(() => {});
+    try { 小火车TCP通道?.close?.(); } catch {}
+  }
+
+  服务端.addEventListener('close', () => 关门谢客(1000, '客户端挥手再见', true));
+  服务端.addEventListener('error', () => 关门谢客(1011, 'WS出错啦', true));
+
+  服务端.addEventListener('message', (事件) => {
+    if (已经关门了) return;
+    排队小助手 = 排队小助手.then(async () => {
+      if (已经关门了) return;
+      if (是第一个糖果包) {
+        是第一个糖果包 = false;
+        await 解读第一个糖果包(事件.data);
+      } else {
+        await 桥梁写入端.write(事件.data);
       }
-    });
+    }).catch(() => 关门谢客(1011, '糖果包处理失败'));
   });
 
-  async function 超级超级可爱解析解析协议协议小头头头(数据数据小包包包, WS超级接口萌酱酱) {
-    const 数据数据小数组酱酱 = new Uint8Array(数据数据小包包包);
-    if (数据数据小数组酱酱.length < 19) {
-      WS超级接口萌酱酱.close(1002, "头头太短短小呜呜~");
+  async function 解读第一个糖果包(糖果数据) {
+    const 视图 = new DataView(糖果数据);
+
+    if (把字节变成身份证号(视图, 1) !== 我的小甜甜身份证) {
+      关门谢客(1008, '身份证不对哦');
       return;
     }
 
-    if (超级超级验证验证魔法魔法小钥匙钥匙(new Uint8Array(数据数据小包包包.slice(1, 17))) !== 人家的小粉红魔法心心钥匙钥匙超级秘密哦) {
-      WS超级接口萌酱酱.close(1003, "魔法魔法不对不对哦哦~");
-      return;
-    }
+    const 附加长度      = 视图.getUint8(17);
+    const 端口起始位    = 18 + 附加长度 + 1;
+    const 目标端口      = 视图.getUint16(端口起始位);
+    const 地址类型起始位 = 端口起始位 + 2;
+    const 地址类型      = 视图.getUint8(地址类型起始位);
 
-    const 数据数据小位置位位 = 数据数据小数组酱酱[17];
-    const 端口端口开始开始小位置位位 = 18 + 数据数据小位置位位 + 1;
-    if (端口端口开始开始小位置位位 + 2 > 数据数据小数组酱酱.length) {
-      WS超级接口萌酱酱.close(1002, "端口端口小信息信息不足不足~");
-      return;
-    }
-    const 端口端口数据数据 = 数据数据小包包包.slice(端口端口开始开始小位置位位, 端口端口开始开始小位置位位 + 2);
-    const 目标目标小端口端口 = new DataView(端口端口数据数据).getUint16(0);
+    let 地址字节长度  = 0;
+    let 目标地址      = '';
+    let 地址数据起始位 = 地址类型起始位 + 1;
 
-    const 地址地址开始开始小位置位位 = 端口端口开始开始小位置位位 + 2;
-    const 地址地址类型类型数据数据 = new Uint8Array(数据数据小包包包.slice(地址地址开始开始小位置位位, 地址地址开始开始小位置位位 + 1));
-    const 地址地址类型类型 = 地址地址类型类型数据数据[0];
-    let 地址地址小长度度度 = 0;
-    let 目标目标地址地址酱酱 = "";
-    let 地址地址位置位置 = 地址地址开始开始小位置位位 + 1;
-
-    switch (地址地址类型类型) {
+    switch (地址类型) {
       case 1:
-        地址地址小长度度度 = 4;
-        if (地址地址位置位置 + 地址地址小长度度度 > 数据数据小数组酱酱.length) {
-          WS超级接口萌酱酱.close(1002, "地址地址数据数据不足不足~");
-          return;
-        }
-        目标目标地址地址酱酱 = new Uint8Array(数据数据小包包包.slice(地址地址位置位置, 地址地址位置位置 + 地址地址小长度度度)).join(".");
+        地址字节长度 = 4;
+        目标地址 = `${视图.getUint8(地址数据起始位)}.${视图.getUint8(地址数据起始位+1)}.${视图.getUint8(地址数据起始位+2)}.${视图.getUint8(地址数据起始位+3)}`;
         break;
       case 2:
-        if (地址地址位置位置 + 1 > 数据数据小数组酱酱.length) {
-          WS超级接口萌酱酱.close(1002, "长度长度小信息信息不足不足~");
-          return;
-        }
-        地址地址小长度度度 = new Uint8Array(数据数据小包包包.slice(地址地址位置位置, 地址地址位置位置 + 1))[0];
-        地址地址位置位置 += 1;
-        if (地址地址位置位置 + 地址地址小长度度度 > 数据数据小数组酱酱.length) {
-          WS超级接口萌酱酱.close(1002, "地址地址超超长长长~");
-          return;
-        }
-        目标目标地址地址酱酱 = new TextDecoder().decode(数据数据小包包包.slice(地址地址位置位置, 地址地址位置位置 + 地址地址小长度度度));
+        地址字节长度 = 视图.getUint8(地址数据起始位);
+        地址数据起始位 += 1;
+        目标地址 = 小可爱文字解码器.decode(new Uint8Array(糖果数据, 地址数据起始位, 地址字节长度));
         break;
       case 3:
-        地址地址小长度度度 = 16;
-        if (地址地址位置位置 + 地址地址小长度度度 > 数据数据小数组酱酱.length) {
-          WS超级接口萌酱酱.close(1002, "IPv6小地址地址不足不足~");
-          return;
-        }
-        const dv = new DataView(数据数据小包包包.slice(地址地址位置位置, 地址地址位置位置 + 地址地址小长度度度));
-        const ipv6小部分部分 = [];
-        for (let i = 0; i < 8; i++) {
-          ipv6小部分部分.push(dv.getUint16(i * 2).toString(16));
-        }
-        目标目标地址地址酱酱 = ipv6小部分部分.join(":");
+        地址字节长度 = 16;
+        目标地址 = Array.from(
+          { length: 8 },
+          (_, i) => 视图.getUint16(地址数据起始位 + i * 2).toString(16)
+        ).join(':');
         break;
       default:
-        WS超级接口萌酱酱.close(1002, "不支持支持小类型类型哦哦~");
+        关门谢客(1008, '不认识的地址类型');
         return;
     }
 
-    const 剩余剩余小数据数据 = 数据数据小包包包.slice(地址地址位置位置 + 地址地址小长度度度);
-    if (剩余剩余小数据数据.byteLength === 0) 剩余剩余小数据数据 = undefined;
+    const 首包剩余数据 = 糖果数据.slice(地址数据起始位 + 地址字节长度);
 
-    try {
-      TCP小窝窝连接酱酱 = connect({ hostname: 目标目标地址地址酱酱, port: 目标目标小端口端口 });
-      await TCP小窝窝连接酱酱.opened;
-    } catch (e) {
-      console.warn("主主连接连接小失败失败，用用备用备小窝窝:", e);
-      const [备用备小主机机机, 备用备小端口口口 = 目标目标小端口端口] = 小星星默认连接窝窝酱酱.split(":");
-      TCP小窝窝连接酱酱 = connect({ hostname: 备用备小主机机机, port: parseInt(备用备小端口口口) || 目标目标小端口端口 });
-      await TCP小窝窝连接酱酱.opened;
+    async function 带超时的连接(主机, 端口) {
+      let 炸弹定时器;
+      const 通道 = connect({ hostname: 主机, port: 端口 });
+      const 超时炸弹 = new Promise((_, reject) => {
+        炸弹定时器 = setTimeout(() => reject(new Error('连接超时')), 直连超时毫秒);
+      });
+      try {
+        await Promise.race([通道.opened, 超时炸弹]);
+        return 通道;
+      } catch (错误) {
+        try { 通道.close(); } catch {}
+        throw 错误;
+      } finally {
+        clearTimeout(炸弹定时器);
+      }
     }
 
-    建立建立超级双双向向传输传输魔法管道道道(剩余剩余小数据数据);
-  }
-
-  function 超级超级验证验证魔法魔法小钥匙钥匙(arr, offset = 0) {
-    const 钥匙钥匙小串串串 = (
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 0]] +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 1]] +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 2]] +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 3]] +
-      "-" +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 4]] +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 5]] +
-      "-" +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 6]] +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 7]] +
-      "-" +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 8]] +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 9]] +
-      "-" +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 10]] +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 11]] +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 12]] +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 13]] +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 14]] +
-      哇塞超级无敌可爱的小魔法数字转换萌萌盒子盒盒[arr[offset + 15]]
-    ).toLowerCase();
-    return 钥匙钥匙小串串串;
-  }
-
-  function concatBuffers(oldBuf, newBuf) {
-    const 总总大小大小 = oldBuf.length + newBuf.length;
-    const 新新缓冲缓冲 = new Uint8Array(总总大小大小);
-    新新缓冲缓冲.set(oldBuf);
-    新新缓冲缓冲.set(newBuf, oldBuf.length);
-    return 新新缓冲缓冲;
-  }
-
-  async function 建立建立超级双双向向传输传输魔法管道道道(初始初始小数据数据) {
     try {
-      写入写入小流流可爱宝贝贝 = TCP小窝窝连接酱酱.writable.getWriter();
-      if (初始初始小数据数据) {
-        await 写入写入小流流可爱宝贝贝.write(初始初始小数据数据);
+      小火车TCP通道 = await 带超时的连接(目标地址, 目标端口);
+    } catch {
+      try {
+        const { 备用主机, 备用端口 } = 拆分地址和端口(当前备用地址, 目标端口);
+        // ✅ 采用纯净版逻辑：备用优选 IP 恢复原生连接，不再等待 opened，防止卡死
+        小火车TCP通道 = connect({ hostname: 备用主机, port: 备用端口 });
+      } catch {
+        关门谢客(1011, '所有路都堵死啦');
+        return;
       }
-      if (超级大缓冲魔法池池.length > 0) {
-        await 写入写入小流流可爱宝贝贝.write(超级大缓冲魔法池池);
+    }
+
+    // ✅ 惊天 BUG 修复：千万不能加 await！让传数据在后台跑，不阻塞后续请求
+    连上之后开始传数据(首包剩余数据).catch(() => {});
+  }
+
+  async function 连上之后开始传数据(首包剩余数据) {
+    if (首包剩余数据?.byteLength > 0) {
+      await 桥梁写入端.write(首包剩余数据);
+    }
+
+    await Promise.all([
+      ts桥梁.readable.pipeTo(小火车TCP通道.writable).catch(() => {
+        关门谢客(1011, '桥梁→TCP中断');
+      }),
+      小火车TCP通道.readable.pipeTo(
+        合包发送流(服务端, 合包最大字节, 合包最大等待) // 💎 保留合包发送
+      ).catch(() => {
+        关门谢客(1011, 'TCP→WS异常');
+      }),
+    ]);
+  }
+}
+
+// 💎 合包发送流保留
+function 合包发送流(服务端, 最大字节, 最大等待ms) {
+  let 积累缓冲 = [];
+  let 积累字节数 = 0;
+  let 定时器 = null;
+  let 正在发送 = false;
+  let 等待发送的resolve = null;
+
+  function 立刻发出去() {
+    if (定时器) { clearTimeout(定时器); 定时器 = null; }
+    if (积累缓冲.length === 0) return;
+    if (服务端.readyState !== WebSocket.OPEN) {
+      积累缓冲 = [];
+      积累字节数 = 0;
+      return;
+    }
+    const 合并包 = new Uint8Array(积累字节数);
+    let 写入位置 = 0;
+    for (const 块 of 积累缓冲) {
+      const 视图块 = ArrayBuffer.isView(块)
+        ? new Uint8Array(块.buffer, 块.byteOffset, 块.byteLength)
+        : new Uint8Array(块);
+      合并包.set(视图块, 写入位置);
+      写入位置 += 视图块.byteLength;
+    }
+    积累缓冲 = [];
+    积累字节数 = 0;
+    正在发送 = true;
+    try {
+      服务端.send(合并包);
+    } finally {
+      正在发送 = false;
+      if (等待发送的resolve) {
+        等待发送的resolve();
+        等待发送的resolve = null;
       }
-      await TCP小窝窝连接酱酱.readable.pipeTo(
-        new WritableStream({
-          async write(chunk) {
-            if (已已关闭关闭小铃铃铛铛) return;
-            WS超级接口萌酱酱.send(chunk);
-          },
-          close() {
-            已已关闭关闭小铃铃铛铛 = true;
-          },
-        }),
-      );
-    } catch (e) {
-      console.error("传送门门小故障障:", e);
-      已已关闭关闭小铃铃铛铛 = true;
     }
   }
+
+  return new WritableStream(
+    {
+      async write(chunk) {
+        if (正在发送) {
+          await new Promise(resolve => { 等待发送的resolve = resolve; });
+        }
+
+        积累缓冲。push(chunk);
+        积累字节数 += chunk.byteLength;
+
+        if (积累字节数 >= 发送缓冲水位) {
+          立刻发出去();
+          if (正在发送) {
+            await new Promise(resolve => { 等待发送的resolve = resolve; });
+          }
+          return;
+        }
+
+        if (积累字节数 >= 最大字节) {
+          立刻发出去();
+        } else if (!定时器) {
+          定时器 = setTimeout(立刻发出去, 最大等待ms);
+        }
+      },
+      async flush() {
+        if (正在发送) {
+          await new Promise(resolve => { 等待发送的resolve = resolve; });
+        }
+        立刻发出去();
+      },
+      async abort() {
+        if (定时器) { clearTimeout(定时器); 定时器 = null; }
+        积累缓冲 = [];
+        积累字节数 = 0;
+      },
+    },
+    new ByteLengthQueuingStrategy({ highWaterMark: 发送缓冲水位 }),
+  );
+}
+
+function 拆分地址和端口(地址字符串, 默认端口) {
+  function 校验端口(端口) {
+    return Number.isInteger(端口) && 端口 >= 1 && 端口 <= 65535 ? 端口 : 默认端口;
+  }
+  if (地址字符串.startsWith('[')) {
+    const 括号结束 = 地址字符串.indexOf(']');
+    const 备用主机 = 地址字符串.slice(0, 括号结束 + 1);
+    const 后缀 = 地址字符串.slice(括号结束 + 1);
+    return {
+      备用主机,
+      备用端口: 校验端口(后缀.startsWith(':') ? Number(后缀.slice(1)) : 默认端口),
+    };
+  }
+  const 冒号位 = 地址字符串.lastIndexOf(':');
+  if (冒号位 === -1) return { 备用主机: 地址字符串, 备用端口: 默认端口 };
+  return {
+    备用主机: 地址字符串.slice(0, 冒号位),
+    备用端口: 校验端口(Number(地址字符串.slice(冒号位 + 1))),
+  };
+}
+
+function 把字节变成身份证号(视图, offset = 0) {
+  const h = 小魔法颜色表;
+  return (
+    h[视图.getUint8(offset)]    + h[视图.getUint8(offset+1)]  +
+    h[视图.getUint8(offset+2)]  + h[视图.getUint8(offset+3)]  + '-' +
+    h[视图.getUint8(offset+4)]  + h[视图.getUint8(offset+5)]  + '-' +
+    h[视图.getUint8(offset+6)]  + h[视图.getUint8(offset+7)]  + '-' +
+    h[视图.getUint8(offset+8)]  + h[视图.getUint8(offset+9)]  + '-' +
+    h[视图.getUint8(offset+10)] + h[视图.getUint8(offset+11)] +
+    h[视图.getUint8(offset+12)] + h[视图.getUint8(offset+13)] +
+    h[视图.getUint8(offset+14)] + h[视图.getUint8(offset+15)]
+  ).toLowerCase();
 }
